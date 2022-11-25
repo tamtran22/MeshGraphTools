@@ -1,5 +1,6 @@
 #include <vector>
 #include <string>
+#include <fstream>
 #include "math.h"
 
 //---------------------------------------------------------------------
@@ -225,7 +226,79 @@ void Mesh::addElement(Element elem){
     this->elem.push_back(elem);
 }
 
+// Auxiliary function for reading Tecplot data.
+std::string findPattern(std::ifstream& file, std::string pattern){
+    std::string temp;
+    while (file >> temp) {
+        if (temp.find(pattern, 0) == 0) {
+            break;
+        }
+    }
+    return temp;
+}
+
+std::string cleanPrefix(std::string str) {
+    while (str.length() > 0) {
+        if (str.front() != '=') {
+            str.erase(str.begin());
+        } else {
+            str.erase(str.begin());
+            break;
+        }
+    }
+    if (str.back() == ',') {
+        str.pop_back();
+    }
+    return str;
+}
+
+int countVariable(std::ifstream& file){
+    std::string s;
+    int count = 0;
+    findPattern(file, "VARIABLES");
+    file >> s;
+    while (true) {
+        file >> s;
+        if (s == "ZONE") {
+            break;
+        }
+        count++;
+    }
+    return count;
+}
+void print(std::vector<float> arr){
+    for (int i = 0; i < arr.size(); i++){
+        std::cout<<arr[i]<<" ";
+    }
+    std::cout<<std::endl;
+}
 void Mesh::fromTecplot(std::string fileName){
     std::cout<<"Read file "<<fileName<<std::endl;
+    std::ifstream tecFile(fileName);
+    std::string dataPacking, s;
+    int numVar, numNode, numElem;
+    numVar = countVariable(tecFile);
+    numNode = std::stoi( cleanPrefix( findPattern(tecFile, "Nodes") ) );
+    numElem = std::stoi( cleanPrefix( findPattern(tecFile, "Elements") ) );
+    dataPacking = cleanPrefix( findPattern(tecFile, "DATAPACKING") ); 
+    findPattern(tecFile, "SINGLE");
+    std::getline(tecFile, s); // Last header line.
+    // Read data
+    std::vector<float> row(numVar);
+    std::vector<std::vector<float>> nodeData(numNode, row);
+    if (dataPacking == "BLOCK") {
+        for (int j = 0; j < numVar; j++){
+            for (int i = 0; i <numNode; i++){
+                tecFile >> nodeData[i][j];
+            }
+        }
+    }
+    for (int i = 0; i < numNode; i++) {
+        this->addNode(Point(nodeData[i]));
+    }
+    // std::getline(tecFile, s); // 
+    std::cout<<s<<std::endl;
+    tecFile.close();
     this->sortElement();
 }
+
