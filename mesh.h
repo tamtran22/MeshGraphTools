@@ -1,4 +1,5 @@
 #include <vector>
+#include <string>
 #include "math.h"
 
 //---------------------------------------------------------------------
@@ -192,6 +193,39 @@ bool Element::operator==(Element otherElement){
     return true;
 }
 
+//---------------------------------------------------------------------
+//-------------------------- Mesh class -------------------------------
+class Mesh{
+private:
+    /* data */
+    void sortElement();
+public:
+    std::vector<Point> node;
+    std::vector<Element> elem;
+    Mesh(/* args */);
+    ~Mesh();
+    void addNode(Point node);
+    void addElement(Element elem);
+    void fromTecplot(std::string fileName);
+};
 
+Mesh::Mesh(/* args */){}
 
+Mesh::~Mesh(){}
 
+void Mesh::sortElement(){
+    quickSort<Element>(this->elem);
+}
+
+void Mesh::addNode(Point node){
+    this->node.push_back(node);
+}
+
+void Mesh::addElement(Element elem){
+    this->elem.push_back(elem);
+}
+
+void Mesh::fromTecplot(std::string fileName){
+    std::cout<<"Read file "<<fileName<<std::endl;
+    this->sortElement();
+}
