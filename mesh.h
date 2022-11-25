@@ -27,7 +27,7 @@ int partition(std::vector<T>& arr, int start, int end){
         while (arr[i] <= pivot) {
             i++;
         }
-        while (arr[j] > pivot) {
+        while (pivot <= arr[j]) {
             j--;
         }
         if (i < pivotIndex && j > pivotIndex) {
@@ -143,14 +143,53 @@ public:
     std::vector<int> nodeID;
     Element(std::vector<int> nodeID);
     ~Element();
+    int operator[](int index);
+    bool operator<=(Element otherElement);
+    bool operator==(Element otherElement);
 };
 
 Element::Element(std::vector<int> nodeID){
+    quickSort(nodeID);
     this->nodeID = nodeID;
     this->numNode = nodeID.size();
 }
 
 Element::~Element(){
+}
+
+int Element::operator[](int index){
+    return this->nodeID[index];
+}
+
+bool Element::operator<=(Element otherElement){
+    // Comparison follows lexicography law on the minimum length
+    int minLength = fmin(this->numNode, otherElement.numNode);
+    bool equal = true;
+    for (int i = 0; i < minLength; i++){
+        if (this->nodeID[i] > otherElement[i]) {
+            return false;
+        } else if (this->nodeID[i] < otherElement[i]) {
+            equal = false;
+        }
+    }
+    if (equal) {
+        return (this->numNode <= otherElement.numNode);
+    } else {
+        return true;
+    }
+}
+
+bool Element::operator==(Element otherElement){
+    if (this->numNode != otherElement.numNode) {
+        return false;
+    } else {
+        for (int i = 0; i < this->numNode; i++){
+            if (this->nodeID[i] != otherElement[i]) {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 
