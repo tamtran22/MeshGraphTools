@@ -306,27 +306,34 @@ void Mesh::toTecplot(std::string fileName){
     tecFile << "TITLE     = \"Tecplot Export\""<<std::endl;
     tecFile << "VARIABLES =";
     for (int i = 0; i < this->numVar; i++){
-        tecFile << "var-" << i << std::endl;
+        tecFile << "\"var-" << i << "\"" << std::endl;
     }
     tecFile << "ZONE T=\"age of air\"" << std::endl;
-    tecFile << "Nodes=" << this->numNode << ", Elements="<<this->numElem<<std::endl;
-    tecFile << "DATAPACKING=BLOCK" << std::endl;
-    tecFile << "DT=(SINGLE SINGLE SINGLE SINGLE )" << std::endl;
+    tecFile << "N=" << this->numNode << ", E="<<this->numElem<<" ,F=FEPoint ,ET=LINESEG" <<std::endl;
+    // tecFile << "DATAPACKING=BLOCK" << std::endl;
+    // tecFile << "DT=(SINGLE SINGLE SINGLE SINGLE )" << std::endl;
 
-    int countPerLine = 0, maxPerLine = 5;
-    for (int j = 0; j < this->numVar; j++){
-        for (int i = 0; i < this->numNode; i++){
-            tecFile << std::scientific << " " << this->node[i][j];
-            countPerLine++;
-            if (countPerLine == maxPerLine) {
-                tecFile << std::endl;
-                countPerLine = 0;
-            }
+    // int countPerLine = 0, maxPerLine = 5;
+    // for (int j = 0; j < this->numVar; j++){
+    //     for (int i = 0; i < this->numNode; i++){
+    //         tecFile << std::scientific << " " << this->node[i][j];
+    //         countPerLine++;
+    //         if (countPerLine == maxPerLine) {
+    //             tecFile << std::endl;
+    //             countPerLine = 0;
+    //         }
+    //     }
+    //     if (countPerLine != 0) {
+    //         countPerLine = 0;
+    //         tecFile << std::endl;
+    //     }
+    // }
+
+    for (int i = 0; i < this->numNode; i++){
+        for (int j = 0; j < this->numVar; j++){
+            tecFile <<" "<< this->node[i][j];
         }
-        if (countPerLine != 0) {
-            countPerLine = 0;
-            tecFile << std::endl;
-        }
+        tecFile << std::endl;
     }
 
     for (int i = 0; i < this->numElem; i++){

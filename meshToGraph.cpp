@@ -6,7 +6,7 @@ using namespace std;
 
 int main(){
     Mesh Th;
-    Th.fromTecplot("first-371.dat");
+    Th.fromTecplot("first-396.dat");
     Th.toTecplot("output.dat");
     return 0;
 }
