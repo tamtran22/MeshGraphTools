@@ -1,5 +1,6 @@
 #include <vector>
 #include <string>
+#include <fstream>
 #include "math.h"
 
 //---------------------------------------------------------------------
@@ -66,6 +67,7 @@ public:
     Point operator*(float otherScala);
     Point operator/(float otherScala);
     bool operator==(Point otherPoint);
+    void operator=(std::vector<float> otherVar);
 };
 
 Point::Point(std::vector<float> var){
@@ -109,6 +111,10 @@ Point Point::operator/(float otherScala){
         outPoint[i] = this->var[i] / otherScala;
     }
     return Point(outPoint);
+}
+
+void Point::operator=(std::vector<float> otherVar){
+    this->var = otherVar;
 }
 
 float abs(Point a){
@@ -202,11 +208,13 @@ private:
 public:
     std::vector<Point> node;
     std::vector<Element> elem;
+    int numNode, numElem, numVar, numElemNode;
     Mesh(/* args */);
     ~Mesh();
     void addNode(Point node);
     void addElement(Element elem);
     void fromTecplot(std::string fileName);
+    void toTecplot(std::string fileName);
 };
 
 Mesh::Mesh(/* args */){}
@@ -225,7 +233,107 @@ void Mesh::addElement(Element elem){
     this->elem.push_back(elem);
 }
 
+bool matchPrefix(std::string str, std::string pattern){
+    for (int i = 0; i < pattern.length(); i++) {
+        if (str[i] != pattern[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+std::string cleanStr(std::string str){
+    while (str.front() != '=') {
+        str.erase(str.begin());
+    }
+    str.erase(str.begin());
+    while (str.back() != ',') {
+        str.pop_back();
+    }
+    str.pop_back();
+    return str;
+}
+
 void Mesh::fromTecplot(std::string fileName){
-    std::cout<<"Read file "<<fileName<<std::endl;
+    std::ifstream tecFile(fileName);
+    std::string s;
+    this->numVar = 4;
+    this->numElemNode = 2;
+    do { // Read numver of nodes.
+        tecFile >> s;
+    } while (! matchPrefix( s, "Nodes"));
+    this->numNode = std::stoi(cleanStr(s));
+
+    do { // Read numver of elems.
+        tecFile >> s;
+    } while (! matchPrefix( s, "Faces"));
+    this->numElem = std::stoi(cleanStr(s));
+
+    do { // Move pointer to data part.
+        tecFile >> s;
+    } while (! matchPrefix( s, "SINGLE"));
+    std::getline(tecFile, s);
+
+    // Read node data.
+    std::vector<float> tempPoint(this->numVar, 0);
+    this->node.assign(this->numNode, Point(tempPoint));
+    for (int j = 0; j < this->numVar; j++){
+        for (int i = 0; i < this->numNode; i++){
+            tecFile >> s;
+            this->node[i].var[j] = std::stof(s);
+        }
+    }
+
+    std::getline(tecFile, s);
+    std::getline(tecFile, s);
+    // Read elem data.
+    std::vector<int> tempElem(this->numElemNode, 0);
+    this->elem.assign(this->numElem, Element(tempElem));
+    for (int i = 0; i < this->numElem; i++){
+        for (int j = 0; j < this->numElemNode; j++){
+            tecFile >> s;
+            this->elem[i].nodeID[j] = std::stoi(s);
+        }
+    }
+
+    tecFile.close();
+
     this->sortElement();
+}
+
+void Mesh::toTecplot(std::string fileName){
+    std::ofstream tecFile(fileName);
+    tecFile << "TITLE     = \"Tecplot Export\""<<std::endl;
+    tecFile << "VARIABLES =";
+    for (int i = 0; i < this->numVar; i++){
+        tecFile << "var-" << i << std::endl;
+    }
+    tecFile << "ZONE T=\"age of air\"" << std::endl;
+    tecFile << "Nodes=" << this->numNode << ", Elements="<<this->numElem<<std::endl;
+    tecFile << "DATAPACKING=BLOCK" << std::endl;
+    tecFile << "DT=(SINGLE SINGLE SINGLE SINGLE )" << std::endl;
+
+    int countPerLine = 0, maxPerLine = 5;
+    for (int j = 0; j < this->numVar; j++){
+        for (int i = 0; i < this->numNode; i++){
+            tecFile << std::scientific << " " << this->node[i][j];
+            countPerLine++;
+            if (countPerLine == maxPerLine) {
+                tecFile << std::endl;
+                countPerLine = 0;
+            }
+        }
+        if (countPerLine != 0) {
+            countPerLine = 0;
+            tecFile << std::endl;
+        }
+    }
+
+    for (int i = 0; i < this->numElem; i++){
+        for (int j = 0; j < this->numElemNode; j++){
+            tecFile <<" "<< this->elem[i][j];
+        }
+        tecFile << std::endl;
+    }
+    tecFile.close();
 }
