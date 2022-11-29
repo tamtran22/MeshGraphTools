@@ -6,15 +6,24 @@
 using namespace std;
 
 int main(int argc, char *argv[]){
-    string fileName;
-    if (argc == 0) {
-        fileName = "default.dat";
-    } else {
-        fileName = argv[0];
+    string fileInName, fileOutName;
+    switch (argc){
+    case 2:
+        fileInName = argv[1];
+        fileOutName = "output.dat";
+        break;
+    case 3:
+        fileInName = argv[1];
+        fileOutName = argv[2];
+        break;
+    default:
+        fileInName = "input.dat";
+        fileOutName = "output.dat";
+        break;
     }
-    cout<<fileName<<endl;
-    // Mesh Th;
-    // Th.fromTecplot("first-396.dat");
-    // Th.toTecplot("output.dat");
+    cout<<"Reading datafile "<<fileInName<<", writing into "<<fileOutName<<endl;
+    Mesh Th;
+    Th.fromTecplot(fileInName);
+    Th.toTecplot(fileOutName);
     return 0;
 }

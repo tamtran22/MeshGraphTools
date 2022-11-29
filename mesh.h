@@ -255,50 +255,54 @@ std::string cleanStr(std::string str){
 }
 
 void Mesh::fromTecplot(std::string fileName){
-    std::ifstream tecFile(fileName);
-    std::string s;
-    this->numVar = 4;
-    this->numElemNode = 2;
-    do { // Read numver of nodes.
-        tecFile >> s;
-    } while (! matchPrefix( s, "Nodes"));
-    this->numNode = std::stoi(cleanStr(s));
-
-    do { // Read numver of elems.
-        tecFile >> s;
-    } while (! matchPrefix( s, "Faces"));
-    this->numElem = std::stoi(cleanStr(s));
-
-    do { // Move pointer to data part.
-        tecFile >> s;
-    } while (! matchPrefix( s, "SINGLE"));
-    std::getline(tecFile, s);
-
-    // Read node data.
-    std::vector<float> tempPoint(this->numVar, 0);
-    this->node.assign(this->numNode, Point(tempPoint));
-    for (int j = 0; j < this->numVar; j++){
-        for (int i = 0; i < this->numNode; i++){
+    try {
+        std::ifstream tecFile(fileName);
+        std::string s;
+        this->numVar = 4;
+        this->numElemNode = 2;
+        do { // Read numver of nodes.
             tecFile >> s;
-            this->node[i].var[j] = std::stof(s);
-        }
-    }
+        } while (! matchPrefix( s, "Nodes"));
+        this->numNode = std::stoi(cleanStr(s));
 
-    std::getline(tecFile, s);
-    std::getline(tecFile, s);
-    // Read elem data.
-    std::vector<int> tempElem(this->numElemNode, 0);
-    this->elem.assign(this->numElem, Element(tempElem));
-    for (int i = 0; i < this->numElem; i++){
-        for (int j = 0; j < this->numElemNode; j++){
+        do { // Read numver of elems.
             tecFile >> s;
-            this->elem[i].nodeID[j] = std::stoi(s);
+        } while (! matchPrefix( s, "Faces"));
+        this->numElem = std::stoi(cleanStr(s));
+
+        do { // Move pointer to data part.
+            tecFile >> s;
+        } while (! matchPrefix( s, "SINGLE"));
+        std::getline(tecFile, s);
+
+        // Read node data.
+        std::vector<float> tempPoint(this->numVar, 0);
+        this->node.assign(this->numNode, Point(tempPoint));
+        for (int j = 0; j < this->numVar; j++){
+            for (int i = 0; i < this->numNode; i++){
+                tecFile >> s;
+                this->node[i].var[j] = std::stof(s);
+            }
         }
+
+        std::getline(tecFile, s);
+        std::getline(tecFile, s);
+        // Read elem data.
+        std::vector<int> tempElem(this->numElemNode, 0);
+        this->elem.assign(this->numElem, Element(tempElem));
+        for (int i = 0; i < this->numElem; i++){
+            for (int j = 0; j < this->numElemNode; j++){
+                tecFile >> s;
+                this->elem[i].nodeID[j] = std::stoi(s);
+            }
+        }
+
+        tecFile.close();
+
+        this->sortElement();
+    } catch (int err) {
+        std::cout<<"Couldn't open input file. Error "<<err<<std::endl;
     }
-
-    tecFile.close();
-
-    this->sortElement();
 }
 
 void Mesh::toTecplot(std::string fileName){
@@ -331,7 +335,7 @@ void Mesh::toTecplot(std::string fileName){
 
     for (int i = 0; i < this->numNode; i++){
         for (int j = 0; j < this->numVar; j++){
-            tecFile <<" "<< this->node[i][j];
+            tecFile << std::scientific <<" "<< this->node[i][j];
         }
         tecFile << std::endl;
     }
